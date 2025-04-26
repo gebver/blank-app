@@ -25,15 +25,15 @@ if prompt := st.chat_input("What is up?"):
 
     # Display assistant response in chat message container
 
-    client = OpenAI(base_url=st.Secrets['base_url'],api_key=st.Secrets['api_key'],
+    client = OpenAI(base_url=st.secrets['base_url'],api_key=st.secrets['api_key'],
 )
     
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
-        assistant_response = client.chat.completions(model=st.Secrests["model"], messages=st.session.state.respones)
+        assistant_response = client.chat.completions.create(model=st.secrets["model"], messages=st.session.state.messages)
         # Simulate stream of response with milliseconds delay
-        for chunk in assistant_response.split():
+        for chunk in assistant_response.choices[0].message.content.split():
             full_response += chunk + " "
             time.sleep(0.05)
             # Add a blinking cursor to simulate typing
