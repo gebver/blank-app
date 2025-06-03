@@ -1,43 +1,43 @@
 import streamlit as st
-import random
-import time
 from openai import OpenAI
-st.write("Streamlit loves LLMs! 🤖 [Build your own chat app](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps) in minutes, then make it powerful by adding images, dataframes, or even input widgets to the chat.")
+import os
 
-st.caption("Note that this demo app isn't actually connected to any LLMs. Those are expensive ;)")
+st.set_page_config(layout="wide", page_title="OpenRouter chatbot app")
+st.title("OpenRouter chatbot app")
 
-# Initialize chat history
+# Próba pobrania sekretów ze Streamlit Cloud
+try:
+    api_key = st.secrets["API_KEY"]
+    base_url = st.secrets["BASE_URL"]
+except Exception:
+    # Jeśli nie ma w st.secrets, bierzemy z environment variables (np. Codespaces)
+    api_key = os.environ.get("API_KEY")
+    base_url = os.environ.get("BASE_URL")
+
+selected_model = "google/gemma-3-1b-it:free"
+
+
+if not api_key or not base_url:
+    st.error("Brak API_KEY lub BASE_URL. Ustaw je w sekretach Streamlit lub jako zmienne środowiskowe.")
+    st.stop()
+
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Let's start chatting! 👇"}]
+    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?."}]
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Wyświetlanie historii czatu
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
 
-# Accept user input
-if prompt := st.chat_input("What is up?"):
-    # Add user message to chat history
+# Obsługa nowego inputu użytkownika
+if prompt := st.chat_input():
+    client = OpenAI(api_key=api_key, base_url=base_url)
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    st.chat_message("user").write(prompt)
 
-    # Display assistant response in chat message container
-
-    client = OpenAI(base_url=st.secrets['base_url'],api_key=st.secrets['api_key'],
-)
-    
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        assistant_response = client.chat.completions.create(model=st.secrets["model"], messages=st.session.state.messages)
-        # Simulate stream of response with milliseconds delay
-        for chunk in assistant_response.choices[0].message.content.split():
-            full_response += chunk + " "
-            time.sleep(0.05)
-            # Add a blinking cursor to simulate typing
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    response = client.chat.completions.create(
+        model=selected_model,
+        messages=st.session_state.messages
+    )
+    msg = response.choices[0].message.content
+    st.session_state.messages.append({"role": "assistant", "content": msg})
+    st.chat_message("assistant").write(msg)
