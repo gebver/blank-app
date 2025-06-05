@@ -14,7 +14,8 @@ except Exception:
     api_key = os.environ.get("API_KEY")
     base_url = os.environ.get("BASE_URL")
 
-selected_model = "google/gemma-3-1b-it:free"
+#selected_model = "mistralai/mistral-7b-instruct:free"
+selected_model = os.environ.get("MODEL")
 
 
 if not api_key or not base_url:
