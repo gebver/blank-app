@@ -1,10 +1,9 @@
 import streamlit as st
 from openai import OpenAI
-import os
-
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
+import os
 
 # ========== RAG KOMPONENT ========== #
 class SimpleRAG:
@@ -38,18 +37,20 @@ class SimpleRAG:
 st.set_page_config(layout="wide", page_title="OpenRouter chatbot app")
 st.title("OpenRouter chatbot app (z RAG)")
 
-# Pobranie sekretów lub zmiennych środowiskowych
-try:
-    api_key = st.secrets["API_KEY"]
-    base_url = st.secrets["BASE_URL"]
-except Exception:
-    api_key = os.environ.get("API_KEY")
-    base_url = os.environ.get("BASE_URL")
+# === Pobranie sekretów Streamlit === #
+missing = []
 
-selected_model = os.environ.get("MODEL", "mistralai/mistral-7b-instruct:free")
+api_key = st.secrets.get("API_KEY")
+base_url = st.secrets.get("BASE_URL")
+selected_model = st.secrets.get("MODEL", "mistralai/mistral-7b-instruct:free")
 
-if not api_key or not base_url:
-    st.error("Brak API_KEY lub BASE_URL. Ustaw je w sekretach Streamlit lub jako zmienne środowiskowe.")
+if not api_key:
+    missing.append("API_KEY")
+if not base_url:
+    missing.append("BASE_URL")
+
+if missing:
+    st.error(f"Brakuje następujących sekretów w pliku `.streamlit/secrets.toml`: {', '.join(missing)}")
     st.stop()
 
 # Wczytaj RAG
